@@ -1,1 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+    <title>CS180 Project1</title>
+    <style>
+     body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+    </style>
+    </head>
+    <body>
+        <div>
+            <center>
+                <h1 style="font-size: 50px;">CS 180 Project 1: Images of the Russian Empire</h1>
+                <h1 style="font-size: 30px;">Colorizing the Prokudin-Gorskii Phot​​o Collection</h1>
+                <h1 style="font-size: 20px;">Yuqi Tang</h1>
+            </center>
+        </div>
+        <h1 style="font-size: 50px;">OverView</h1>
+        <h1 style="font-size: 20px;">Sergei Mikhailovich Prokudin-Gorskii (1863–1944) was a pioneering Russian photographer, best known for his early color photography,namely the Prokudin-Gorskii Photo Collection. In this photo collection, he captured three separate monochrome images of the same scene through red, green, and blue filters, which allowed a full-color image to be created when the three layers were combined.</h1>
+        <h1 style="font-size: 20px;">In this project, we aimed to use digitized images of Prokudin-Gorskii glass plates and modern image processing techniques to automatically generate color images with as few visual artifacts as possible.</h1>
+        <h1 style="font-size: 50px;">Approach</h1>
+        <h1 style="font-size: 20px;">I assumed a simple (x,y) translation model is sufficient for proper alignment. I use the blue channel image as the reference image and try to move the red channel image and the green channel image to match the blue channel image. I start with a simple but inefficient method, namely search over the window of [-15, 15] x [-15, 15] of displacements and calculate the similarity between the two channel images. I use Normalized Cross Correlation(NCC) as the similarity and select the displacement with the best similarity as the best displacement. After that, I apply the corresponding displacements to the images of the two channels respectively to create a full-color image.</h1>
+        <h1 style="font-size: 20px;">During the experiment, I discovered that image edges adversely affect the calculation of the optimal displacement. Therefore, I cropped 5% of both sides of the image and then calculated the similarity.</h1>
+        <h1 style="font-size: 20px;">However, this algorithm is very inefficient when processing high-resolution images like .tifs. This is because for high-resolution images the algorithm needs to search a much larger window to find the best displacement. This can take anywhere from a few minutes to a few hours.</h1>
+        <img src="./media/pyramid.jpg"> <br>pyramid search algorithm.jpg <br>
+        <h1 style="font-size: 20px;">Thus, a pyramid search algorithm is used to process hi-res images. This method build a pyramid of progressively lower resolution images from the original images. It starts by searching through the best displacement at the coarsest level and then refine the search result by moving down the pyramid. Since you know the optimal displacement on the coarser image, you only need to search a limited area to get the optimal displacement on the current image. This refine procedure will continue until reaching the original resolution and acquire the optimal displacement.</h1>
+        <h1 style="font-size: 20px;">In this project, I downscale images by some power of 2 until they are under 800*800 pixels. Then, I align the smallest image by searching over the window[-width*5%,width*5%] x [-height*5%,height*5%] to get the best displacement (dx,dy). After that, I scale up the image and search in a limited range, namely [2*dx-2,2*dx+2] X [2*dy-2,2*dy+2] to find the best displacement of current image. I continue this process until acquire the optimal displacement of the original image. After synthesis the full-color image, I cropped 7% of both sides of the them to get better visual effects.</h1>
+        <h1 style="font-size: 50px;">Bells & Whistles</h1>
+        <h1 style="font-size: 20px;">In order to further improve the quality of the resulting color pictures, I tried to use the gradient image of the original image instead of the original image to calculate the optimal displacement.I use the sobel operator to process the original images and obtain their gradient images, which can better outline the boundaries of the shapes in the original images without being disturbed by brightness. This method gives better results on most .tifs.</h1>
+        <h1 style="font-size: 20px;">This method has achieved remarkable results on the following images:</h1>
+        <img src="./media/output_emircroped.jpg" height="700" width="700"> <br>emir.tif (non sobel)<br>
+        <img src="./media/sobel_output_emircroped.jpg" height="700" width="700"> <br>emir.tif (sobel)<br>
+        <img src="./media/output_ladycroped.jpg" height="700" width="700"> <br>lady.tif (non sobel) <br>
+        <img src="./media/sobel_output_ladycroped.jpg" height="700" width="700"> <br>lady.tif (sobel) <br>
+        <img src="./media/output_sculpturecroped.jpg" height="700" width="700"> <br>sculpture.tif (non sobel) <br>
+        <img src="./media/sobel_output_sculpturecroped.jpg" height="700" width="700"> <br>sculpture.tif (sobel) <br>
+        <h1 style="font-size: 20px;">It can be noticed that using the image processed by the sobel operator for matching can get better output results.</h1>
+        <h1 style="font-size: 50px;">Results</h1>
+        <h1 style="font-size: 20px;"> Displacement are listed as (dx,dy), dx reprensent the displacement in width and dy reprensent the displacement in height.</h1>
+        <img src="./media/output_cathedral.jpg" height="700" width="700"> <br>cathedral.jpg (original non sobel) G(2,5) R(3,12)<br>
+        <img src="./media/output_cathedralcroped.jpg" height="700" width="700"> <br>cathedral.jpg (cropped non sobel) G(2,5) R(3,12)<br>
+        <img src="./media/sobel_output_cathedralcroped.jpg" height="700" width="700"> <br>cathedral.jpg (sobel) G(2,5) R(3,12)<br>
 
+        <img src="./media/output_church.jpg" height="700" width="700"> <br>church.tif (original non sobel) G(0,24) R(-6,58)<br>
+        <img src="./media/output_churchcroped.jpg" height="700" width="700"> <br>church.tif (cropped non sobel) G(0,24) R(-6,58)<br>
+        <img src="./media/sobel_output_churchcroped.jpg" height="700" width="700"> <br>church.tif (sobel) G(4,24) R(-4,56)<br>
+
+        <img src="./media/output_emir.jpg" height="700" width="700"> <br>emir.tif (original non sobel) G(24,48) R(64,100)<br>
+        <img src="./media/output_emircroped.jpg" height="700" width="700"> <br>emir.tif (cropped non sobel) G(24,48) R(64,100)<br>
+        <img src="./media/sobel_output_emircroped.jpg" height="700" width="700"> <br>emir.tif (sobel) G(24,48) R(40,108)<br>
+
+        <img src="./media/output_harvesters.jpg" height="700" width="700"> <br>harvesters.tif (original non sobel) G(18,60) R(16,124)<br>
+        <img src="./media/output_harvesterscroped.jpg" height="700" width="700"> <br>harvesters.tif (cropped non sobel) G(18,60) R(16,124)<br>
+        <img src="./media/sobel_output_harvesterscroped.jpg" height="700" width="700"> <br>harvesters.tif (sobel) G(20,60) R(16,128)<br>
+
+        <img src="./media/output_icon.jpg" height="700" width="700"> <br>icon.tif (original non sobel) G(16,40) R(22,88)<br>
+        <img src="./media/output_iconcroped.jpg" height="700" width="700"> <br>icon.tif (cropped non sobel) G(16,40) R(22,88)<br>
+        <img src="./media/sobel_output_iconcroped.jpg" height="700" width="700"> <br>icon.tif (sobel) G(16,44) R(24,88)<br>
+
+        <img src="./media/output_lady.jpg" height="700" width="700"> <br>lady.tif (original non sobel) G(8,54) R(12,108)<br>
+        <img src="./media/output_ladycroped.jpg" height="700" width="700"> <br>lady.tif (cropped non sobel) G(8,54) R(12,108)<br>
+        <img src="./media/sobel_output_ladycroped.jpg" height="700" width="700"> <br>lady.tif (sobel) G(12,52) R(8,116)<br>
+
+        <img src="./media/output_melons.jpg" height="700" width="700"> <br>melons.tif (original non sobel) G(8,80) R(12,176)<br>
+        <img src="./media/output_melonscroped.jpg" height="700" width="700"> <br>melons.tif (cropped non sobel) G(8,80) R(12,176)<br>
+        <img src="./media/sobel_output_melonscroped.jpg" height="700" width="700"> <br>melons.tif (sobel) G(12,80) R(12,176)<br>
+
+        <img src="./media/output_monastery.jpg" height="700" width="700"> <br>monastery.jpg (original non sobel) G(2,-3) R(2,3)<br>
+        <img src="./media/output_monasterycroped.jpg" height="700" width="700"> <br>monastery.jpg (cropped non sobel) G(2,-3) R(2,3)<br>
+        <img src="./media/sobel_output_monasterycroped.jpg" height="700" width="700"> <br>monastery.jpg (sobel) G(2,-3) R(2,3)<br>
+
+        <img src="./media/output_onion_church.jpg" height="700" width="700"> <br>onion_church.tif (original non sobel) G(26,52) R(37,108)<br>
+        <img src="./media/output_onion_churchcroped.jpg" height="700" width="700"> <br>onion_church.tif (cropped non sobel) G(26,52) R(37,108)<br>
+        <img src="./media/sobel_output_onion_churchcroped.jpg" height="700" width="700"> <br>onion_church.tif (sobel) G(28,52) R(36,108)<br>
+
+        <img src="./media/output_sculpture.jpg" height="700" width="700"> <br>sculpture.tif (original non sobel) G(-11,33) R(-26,140)<br>
+        <img src="./media/output_sculpturecroped.jpg" height="700" width="700"> <br>sculpture.tif (cropped non sobel) G(-11,33) R(-26,140)<br>
+        <img src="./media/sobel_output_sculpturecroped.jpg" height="700" width="700"> <br>sculpture.tif (sobel) G(-10,34) R(-26,140)<br>
+
+        <img src="./media/output_self_portrait.jpg" height="700" width="700"> <br>self_portrait.tif (original non sobel) G(28,80) R(32,176)<br>
+        <img src="./media/output_self_portraitcroped.jpg" height="700" width="700"> <br>self_portrait.tif (cropped non sobel) G(28,80) R(32,176)<br>
+        <img src="./media/sobel_output_self_portraitcroped.jpg" height="700" width="700"> <br>self_portrait.tif (sobel) G(24,72) R(36,172)<br>
+
+        <img src="./media/output_three_generations.jpg" height="700" width="700"> <br>three_generations.tif (original non sobel) G(14,54) R(10,112)<br>
+        <img src="./media/output_three_generationscroped.jpg" height="700" width="700"> <br>three_generations.tif (cropped non sobel) G(14,54) R(10,112)<br>
+        <img src="./media/sobel_output_three_generationscroped.jpg" height="700" width="700"> <br>three_generations.tif (sobel) G(12,48) R(12,108)<br>
+
+        <img src="./media/output_tobolsk.jpg" height="700" width="700"> <br>tobolsk.jpg (original non sobel) G(2,3) R(3,6)<br>
+        <img src="./media/output_tobolskcroped.jpg" height="700" width="700"> <br>tobolsk.jpg (cropped non sobel) G(2,3) R(3,6)<br>
+        <img src="./media/sobel_output_tobolskcroped.jpg" height="700" width="700"> <br>tobolsk.jpg (sobel) G(2,3) R(3,6)<br>
+
+        <img src="./media/output_train.jpg" height="700" width="700"> <br>train.jpg (original non sobel) G(4,44) R(32,88)<br>
+        <img src="./media/output_traincroped.jpg" height="700" width="700"> <br>train.jpg (cropped non sobel) G(4,44) R(32,88)<br>
+        <img src="./media/sobel_output_traincroped.jpg" height="700" width="700"> <br>train.jpg (sobel) G(8,44) R(32,88)<br>
+    </body>
+</html>
